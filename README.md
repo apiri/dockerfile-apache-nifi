@@ -1,9 +1,10 @@
+![Apache NiFi logo](http://nifi.incubator.apache.org/images/niFi-logo-horizontal.png "Apache NiFi (incubating)")
 # dockerfile-apache-nifi
 ## Version 0.0.1-incubating
 
 ### Apache NiFi Dockerfile
 
-Provides a Dockerfile and associated scripts for configuring an instance of Apache NiFi to run with certificate authentication.  
+Provides a Dockerfile and associated scripts for configuring an instance of [Apache NiFi (incubating)](http://nifi.incubator.apache.org) to run with certificate authentication.  
 
 ## Sample Usage
 
@@ -28,7 +29,7 @@ From your checkout directory:
 	    	apiri/apache-nifi:0.0.1-incubating
 
 
-	`-p 8443:443`:
+	`-p 8443:443`
 	exposes the UI at port 8443 on the Docker host system
 
 	`-v ${cert_path}:/opt/certs` 
