@@ -1,12 +1,14 @@
 FROM            centos:centos7
 
-MAINTAINER      Aldrin Piri
+MAINTAINER      Aldrin Piri <aldrinpiri@gmail.com>
 
 RUN             yum install -y java-1.7.0-openjdk-devel
 ADD             nifi-*-bin.tar.gz       /opt/
+RUN             mv /opt/*               /opt/nifi
 
 # Expose web port 
-EXPOSE          8080
+EXPOSE         443 
 
-WORKDIR         /opt/nifi-0.0.1-incubating/
-CMD             ["bin/nifi.sh", "run"]
+ADD             ./sh/ /opt/sh
+WORKDIR         /opt/nifi/
+CMD             ["/opt/sh/start.sh"]
