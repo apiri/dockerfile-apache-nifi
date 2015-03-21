@@ -52,6 +52,10 @@ From your checkout directory:
 		
 5. Stopping
 		
+* From the terminal used to start the container above, perform a `Ctrl+C` to send the interrupt to the container.
+* Alternatively, execute a docker command for the container via a `docker stop <container id>` or `docker kill <container id>`
+
+		
 ## Conventions
 ### $NIFI_HOME
 - The Dockerfile specifies an environment variable `NIFI_HOME` via the `ENV` command
