@@ -10,7 +10,7 @@ RUN             mv /opt/*               ${NIFI_HOME}
 
 
 # Expose web port 
-EXPOSE          443 
+EXPOSE          80 443 
 VOLUME          ["/opt/certs", "${NIFI_HOME}/flowfile_repository", "${NIFI_HOME}/content_repository", "${NIFI_HOME}/database_repository", "${NIFI_HOME}/content_repository", "${NIFI_HOME}/provenance_repository"]
 
 ADD             ./sh/ /opt/sh
