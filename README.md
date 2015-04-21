@@ -1,6 +1,6 @@
 ![Apache NiFi logo](http://nifi.incubator.apache.org/images/niFi-logo-horizontal.png "Apache NiFi (incubating)")
 # dockerfile-apache-nifi
-## Version 0.0.1-incubating
+## Version 0.0.2-incubating
 
 ### Apache NiFi Dockerfile
 
