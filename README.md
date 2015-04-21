@@ -12,7 +12,7 @@ From your checkout directory:
 		
 1. Build the image
 
-		make
+        docker build -t apiri/apache-nifi .
 		
 2. Run the image 
 
