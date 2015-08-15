@@ -26,7 +26,7 @@ From your checkout directory:
 	    	-e TRUSTSTORE_PATH=/opt/certs/truststore.jks \
 	    	-e TRUSTSTORE_PASSWORD=password \
 	    	-e TRUSTSTORE_TYPE=JKS \
-	    	apiri/apache-nifi:0.2.0-incubating
+	    	apiri/apache-nifi
 
 
 	`-p 8443:443`
