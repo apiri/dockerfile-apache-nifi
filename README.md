@@ -1,6 +1,6 @@
 ![Apache NiFi logo](http://nifi.apache.org/images/niFi-logo-horizontal.png "Apache NiFi")
 # dockerfile-apache-nifi
-## Version 0.1.0-incubating
+## Version 0.2.0-incubating
 
 ### Apache NiFi Dockerfile
 
@@ -26,7 +26,7 @@ From your checkout directory:
 	    	-e TRUSTSTORE_PATH=/opt/certs/truststore.jks \
 	    	-e TRUSTSTORE_PASSWORD=password \
 	    	-e TRUSTSTORE_TYPE=JKS \
-	    	apiri/apache-nifi:0.1.0-incubating
+	    	apiri/apache-nifi:0.2.0-incubating
 
 
 	`-p 8443:443`
