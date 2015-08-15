@@ -1,10 +1,10 @@
-![Apache NiFi logo](http://nifi.incubator.apache.org/images/niFi-logo-horizontal.png "Apache NiFi (incubating)")
+![Apache NiFi logo](http://nifi.apache.org/images/niFi-logo-horizontal.png "Apache NiFi")
 # dockerfile-apache-nifi
-## Version 0.0.2-incubating
+## Version 0.1.0-incubating
 
 ### Apache NiFi Dockerfile
 
-Provides a Dockerfile and associated scripts for configuring an instance of [Apache NiFi (incubating)](http://nifi.incubator.apache.org) to run with certificate authentication.  
+Provides a Dockerfile and associated scripts for configuring an instance of [Apache NiFi](http://nifi.apache.org) to run with certificate authentication.  
 
 ## Sample Usage
 
@@ -26,7 +26,7 @@ From your checkout directory:
 	    	-e TRUSTSTORE_PATH=/opt/certs/truststore.jks \
 	    	-e TRUSTSTORE_PASSWORD=password \
 	    	-e TRUSTSTORE_TYPE=JKS \
-	    	apiri/apache-nifi:0.0.1-incubating
+	    	apiri/apache-nifi:0.1.0-incubating
 
 
 	`-p 8443:443`
