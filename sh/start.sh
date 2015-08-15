@@ -4,7 +4,12 @@
 nifi_props_file=${NIFI_HOME}/conf/nifi.properties
 
 hr() {
-    printf '\n%*s\n\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' '*'
+    width=20
+    if [[ -s "$TERM" ]]
+    then
+        width=$(tput cols)
+    fi
+    printf '\n%*s\n\n' "${COLUMNS:-${width}}" '' | tr ' ' '*'
 }
 
 enable_ssl() {
