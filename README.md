@@ -66,5 +66,4 @@ From your checkout directory:
 	- `${NIFI_HOME}/flowfile_repository`
 	- `${NIFI_HOME}/content_repository`
 	- `${NIFI_HOME}/database_repository`
-	- `${NIFI_HOME}/content_repository`
 	- `${NIFI_HOME}/provenance_repository`
