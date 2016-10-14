@@ -12,7 +12,7 @@ From your checkout directory:
 		
 1. Build the image
 
-        docker build -t apiri/apache-nifi .
+        docker build -t aldrin/apache-nifi .
 		
 2. Run the image 
 
@@ -26,7 +26,7 @@ From your checkout directory:
 	    	-e TRUSTSTORE_PATH=/opt/certs/truststore.jks \
 	    	-e TRUSTSTORE_PASSWORD=password \
 	    	-e TRUSTSTORE_TYPE=JKS \
-	    	apiri/apache-nifi
+	    	aldrin/apache-nifi
 
 
 	`-p 8443:443`
