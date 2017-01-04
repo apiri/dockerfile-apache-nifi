@@ -1,6 +1,6 @@
 ![Apache NiFi logo](http://nifi.apache.org/images/niFi-logo-horizontal.png "Apache NiFi")
 # dockerfile-apache-nifi
-## Version 1.1.0
+## Version 1.1.1
 
 ### Apache NiFi Dockerfile
 
