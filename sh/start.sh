@@ -57,7 +57,7 @@ enable_ssl() {
 
     # Disable HTTP and enable HTTPS
     sed -i -e 's|nifi.web.http.port=.*$|nifi.web.http.port=|' ${nifi_props_file}
-    sed -i -e 's|nifi.web.https.port=.*$|nifi.web.https.port=443|' ${nifi_props_file}
+    sed -i -e 's|nifi.web.https.port=.*$|nifi.web.https.port=8443|' ${nifi_props_file}
 }
 
 disable_ssl() {
@@ -71,7 +71,7 @@ disable_ssl() {
     sed -i -e 's|^nifi.security.truststorePasswd=.*$|nifi.security.truststorePasswd=|' ${nifi_props_file}
 
     # Disable HTTPS and enable HTTP
-    sed -i -e 's|nifi.web.http.port=.*$|nifi.web.http.port=80|' ${nifi_props_file}
+    sed -i -e 's|nifi.web.http.port=.*$|nifi.web.http.port=8080|' ${nifi_props_file}
     sed -i -e 's|nifi.web.https.port=.*$|nifi.web.https.port=|' ${nifi_props_file}
 }
 
