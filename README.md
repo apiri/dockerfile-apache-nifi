@@ -17,7 +17,7 @@ From your checkout directory:
 2. Run the image
 
 		docker run -i -t --rm \
-	   	 	-p 8443:443 \
+	   	 	-p 8443:8443 \
 	    	-v ${cert_path}:/opt/certs \
 	    	-v $(readlink -f ./authorized-users.xml):/opt/nifi/conf/authorized-users.xml \
 	    	-e KEYSTORE_PATH=/opt/certs/keystore.jks \
@@ -30,7 +30,7 @@ From your checkout directory:
 	    	-e JVM_HEAP_MAX=-Xmx500m \
 	    	aldrin/apache-nifi
 
-	`-p 8443:443`
+	`-p 8443:8443`
 	exposes the UI at port 8443 on the Docker host system
 
 	`-v ${cert_path}:/opt/certs`
