@@ -16,6 +16,8 @@ From your checkout directory:
 
 2. Run the image
 
+		standalone mode
+
 		docker run -i -t --rm \
 	   	 	-p 8443:8443 \
 	    	-v ${cert_path}:/opt/certs \
@@ -32,6 +34,22 @@ From your checkout directory:
 				-e REPOSITORY_INDEX_THREADS=2 \
 				-e NIFI_LOGGING_LEVEL=ERROR \
 	    	aldrin/apache-nifi
+
+		cluster mode (without security)
+
+		docker run -i -t --rm \
+		-p 8443:8443 \
+		-e DISABLE_SSL=true \
+		-e JVM_HEAP_START=-Xms300m \
+		-e JVM_HEAP_MAX=-Xmx500m \
+		-e ARCHIVE_ENABLED=false \
+		-e REPOSITORY_INDEX_THREADS=2 \
+		-e NIFI_LOGGING_LEVEL=ERROR \
+		-e NIFI_CLUSTER_IS_NODE=true \
+		-e NIFI_CLUSTER_NODE_ADDRESS=localhost \
+		-e NIFI_CLUSTER_NODE_PROTOCOL_PORT=8888 \
+		-e NIFI_ZOOKEEPER_CONNECT_STRING=zookeeper:2181 \
+		aldrin/apache-nifi
 
 	`-p 8443:8443`
 	exposes the UI at port 8443 on the Docker host system
@@ -71,3 +89,4 @@ From your checkout directory:
 	- `${NIFI_HOME}/content_repository`
 	- `${NIFI_HOME}/database_repository`
 	- `${NIFI_HOME}/provenance_repository`
+

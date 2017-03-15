@@ -107,11 +107,64 @@ update_logging_level() {
     fi
 }
 
+update_host() {
+    echo Configuring cluster
+    if [[ -z ${NIFI_HOST+x} ]]; then
+        echo "nifi host is not specified, Using default value (localhost)"
+    else
+        echo "nifi host name is set to ${NIFI_HOST}"
+        sed -i "s|nifi.remote.input.host=.*$|nifi.remote.input.host=${NIFI_HOST}|" ${nifi_props_file}
+        sed -i "s|nifi.web.http.host=.*$|nifi.web.http.host=${NIFI_HOST}|" ${nifi_props_file}
+        sed -i "s|nifi.web.https.host=.*$|nifi.web.https.host=${NIFI_HOST}|" ${nifi_props_file}
+    fi
+}
+
+configure_cluster() {
+    echo Configuring cluster
+    if [[ -z ${NIFI_CLUSTER_IS_NODE+x} ]]; then
+        echo "nifi cluster is node is not specified, Using default value (false). Nifi is running in standalone mode."
+        # Since it is not cluster mode, do not need to consume other variables that are cluster specific
+        # exit the function without terminate the script
+        return 0
+    else
+        echo "nifi cluster is node is set to ${NIFI_CLUSTER_IS_NODE}, Nifi is running in cluster mode"
+        sed -i "s|nifi.cluster.is.node=.*$|nifi.cluster.is.node=${NIFI_CLUSTER_IS_NODE}|" ${nifi_props_file}
+    fi
+
+    if [[ -z ${NIFI_CLUSTER_NODE_ADDRESS+x} ]]; then
+        echo "NIFI_CLUSTER_NODE_ADDRESS is not specified but required in the cluster mode."
+        exit 1
+    else
+        echo "nifi cluster node address is set to ${NIFI_CLUSTER_NODE_ADDRESS}"
+        sed -i "s|nifi.cluster.node.address=.*$|nifi.cluster.node.address=${NIFI_CLUSTER_NODE_ADDRESS}|" ${nifi_props_file}
+    fi
+
+    if [[ -z ${NIFI_CLUSTER_NODE_PROTOCOL_PORT+x} ]]; then
+        echo "NIFI_CLUSTER_NODE_PROTOCOL_PORT is not specified but required in the cluster mode."
+        exit 1
+    else
+        echo "nifi cluster node address is set to ${NIFI_CLUSTER_NODE_PROTOCOL_PORT}"
+        sed -i "s|nifi.cluster.node.protocol.port=.*$|nifi.cluster.node.protocol.port=${NIFI_CLUSTER_NODE_PROTOCOL_PORT}|" ${nifi_props_file}
+    fi
+
+    if [[ -z ${NIFI_ZOOKEEPER_CONNECT_STRING+x} ]]; then
+        echo "nifi zookeeper connect string is not specified but required in the cluster mode."
+        exit 1
+    else
+        echo "nifi cluster node address is set to ${NIFI_ZOOKEEPER_CONNECT_STRING}"
+        sed -i "s|nifi.zookeeper.connect.string=.*$|nifi.zookeeper.connect.string=${NIFI_ZOOKEEPER_CONNECT_STRING}|" ${nifi_props_file}
+    fi
+}
+
 update_jvm_size
 
 update_repository_archive
 
 update_logging_level
+
+update_host
+
+configure_cluster
 
 if [[ "$DISABLE_SSL" != "true" ]]; then
     enable_ssl
