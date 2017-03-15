@@ -2,6 +2,7 @@
 
 # NIFI_HOME is defined by an ENV command in the backing Dockerfile
 nifi_props_file=${NIFI_HOME}/conf/nifi.properties
+bootstrap_file=${NIFI_HOME}/conf/bootstrap.conf
 
 hr() {
     width=20
@@ -10,6 +11,23 @@ hr() {
         width=$(tput cols)
     fi
     printf '\n%*s\n\n' "${COLUMNS:-${width}}" '' | tr ' ' '*'
+}
+
+update_jvm_size() {
+    echo Configuring jvm heap update_jvm_size
+    if [[ -z ${JVM_HEAP_START+x} ]]; then
+        echo "JVM start heapsize is not specified, Using default value"
+    else
+        echo "JVM start heapsize is set to ${JVM_HEAP_START}"
+        sed -i "s|^java.arg.2=.*$|java.arg.2=${JVM_HEAP_START}|" ${bootstrap_file}
+    fi
+
+    if [[ -z ${JVM_HEAP_MAX+x} ]]; then
+        echo "JVM max heapsize is not specified, Using default value"
+    else
+        echo "JVM max heapsize is set to ${JVM_HEAP_MAX}"
+        sed -i "s|^java.arg.3=.*$|java.arg.3=${JVM_HEAP_MAX}|" ${bootstrap_file}
+    fi
 }
 
 enable_ssl() {
@@ -56,6 +74,8 @@ disable_ssl() {
     sed -i -e 's|nifi.web.http.port=.*$|nifi.web.http.port=80|' ${nifi_props_file}
     sed -i -e 's|nifi.web.https.port=.*$|nifi.web.https.port=|' ${nifi_props_file}
 }
+
+update_jvm_size
 
 if [[ "$DISABLE_SSL" != "true" ]]; then
     enable_ssl
