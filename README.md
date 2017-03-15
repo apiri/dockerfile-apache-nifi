@@ -28,6 +28,9 @@ From your checkout directory:
 	    	-e TRUSTSTORE_TYPE=JKS \
 	    	-e JVM_HEAP_START=-Xms300m \
 	    	-e JVM_HEAP_MAX=-Xmx500m \
+				-e ARCHIVE_ENABLED=false \
+				-e REPOSITORY_INDEX_THREADS=2 \
+				-e NIFI_LOGGING_LEVEL=ERROR \
 	    	aldrin/apache-nifi
 
 	`-p 8443:8443`

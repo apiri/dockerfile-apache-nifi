@@ -3,6 +3,7 @@
 # NIFI_HOME is defined by an ENV command in the backing Dockerfile
 nifi_props_file=${NIFI_HOME}/conf/nifi.properties
 bootstrap_file=${NIFI_HOME}/conf/bootstrap.conf
+logback_file=${NIFI_HOME}/conf/logback.xml
 
 hr() {
     width=20
@@ -14,7 +15,7 @@ hr() {
 }
 
 update_jvm_size() {
-    echo Configuring jvm heap update_jvm_size
+    echo Configuring jvm heap
     if [[ -z ${JVM_HEAP_START+x} ]]; then
         echo "JVM start heapsize is not specified, Using default value"
     else
@@ -27,6 +28,26 @@ update_jvm_size() {
     else
         echo "JVM max heapsize is set to ${JVM_HEAP_MAX}"
         sed -i "s|^java.arg.3=.*$|java.arg.3=${JVM_HEAP_MAX}|" ${bootstrap_file}
+    fi
+}
+
+update_repository_archive() {
+     echo Configuring repository archive settings
+     if [[ -z ${ARCHIVE_ENABLED+x} ]]; then
+        echo "nifi content repository archive enabled not specified, Using default value (true)"
+    else
+        echo "nifi content repository archive enabled is set to ${ARCHIVE_ENABLED}"
+        sed -i "s|^nifi.content.repository.archive.enabled=.*$|nifi.content.repository.archive.enabled=${ARCHIVE_ENABLED}|" ${nifi_props_file}
+    fi
+}
+
+update_provenance_repository() {
+     echo Configuring provenance repository settings
+     if [[ -z ${REPOSITORY_INDEX_THREADS+x} ]]; then
+        echo "nifi provenance repository index threads not specified, Using default value 1"
+    else
+        echo "nifi provenance repository index threads is set to ${REPOSITORY_INDEX_THREADS}"
+        sed -i "s|^nifi.provenance.repository.index.threads=.*$|nifi.provenance.repository.index.threads=${REPOSITORY_INDEX_THREADS}|" ${nifi_props_file}
     fi
 }
 
@@ -75,7 +96,22 @@ disable_ssl() {
     sed -i -e 's|nifi.web.https.port=.*$|nifi.web.https.port=|' ${nifi_props_file}
 }
 
+update_logging_level() {
+    # only support the top level logging which is org.apache.nifi
+    echo Configuring logging levels
+    if [[ -z ${NIFI_LOGGING_LEVEL+x} ]]; then
+        echo "nifi logging level is not specified, Using default value (INFO)"
+    else
+        echo "nifi logging level is set to ${NIFI_LOGGING_LEVEL}"
+        sed -i "s|name=\"org.apache.nifi\" level=\"INFO\"|name=\"org.apache.nifi\" level=\"${NIFI_LOGGING_LEVEL}\"|" ${logback_file}
+    fi
+}
+
 update_jvm_size
+
+update_repository_archive
+
+update_logging_level
 
 if [[ "$DISABLE_SSL" != "true" ]]; then
     enable_ssl
