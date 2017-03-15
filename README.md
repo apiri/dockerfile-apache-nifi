@@ -26,8 +26,9 @@ From your checkout directory:
 	    	-e TRUSTSTORE_PATH=/opt/certs/truststore.jks \
 	    	-e TRUSTSTORE_PASSWORD=password \
 	    	-e TRUSTSTORE_TYPE=JKS \
+	    	-e JVM_HEAP_START=-Xms300m \
+	    	-e JVM_HEAP_MAX=-Xmx500m \
 	    	aldrin/apache-nifi
-
 
 	`-p 8443:443`
 	exposes the UI at port 8443 on the Docker host system
