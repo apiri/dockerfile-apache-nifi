@@ -13,6 +13,7 @@ From your checkout directory:
 1. Build the image
 
         docker build -t aldrin/apache-nifi .
+        use --build-arg HTTP_PROXY=http://<proxy_hostname>:<proxy_port> when you need to build the image behind proxy
 
 2. Run the image
 
