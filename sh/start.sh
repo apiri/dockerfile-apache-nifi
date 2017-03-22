@@ -143,7 +143,7 @@ configure_cluster() {
         echo "NIFI_CLUSTER_NODE_PROTOCOL_PORT is not specified but required in the cluster mode."
         exit 1
     else
-        echo "nifi cluster node address is set to ${NIFI_CLUSTER_NODE_PROTOCOL_PORT}"
+        echo "nifi cluster node protocol port is set to ${NIFI_CLUSTER_NODE_PROTOCOL_PORT}"
         sed -i "s|nifi.cluster.node.protocol.port=.*$|nifi.cluster.node.protocol.port=${NIFI_CLUSTER_NODE_PROTOCOL_PORT}|" ${nifi_props_file}
     fi
 
@@ -151,12 +151,24 @@ configure_cluster() {
         echo "nifi zookeeper connect string is not specified but required in the cluster mode."
         exit 1
     else
-        echo "nifi cluster node address is set to ${NIFI_ZOOKEEPER_CONNECT_STRING}"
+        echo "nifi zookeeper connect string  is set to ${NIFI_ZOOKEEPER_CONNECT_STRING}"
         sed -i "s|<property name=\"Connect String\"></property>|<property name=\"Connect String\">${NIFI_ZOOKEEPER_CONNECT_STRING}</property>|" ${state_management_file}
         sed -i "s|nifi.zookeeper.connect.string=.*$|nifi.zookeeper.connect.string=${NIFI_ZOOKEEPER_CONNECT_STRING}|" ${nifi_props_file}
     fi
 
+    if [[ -z ${NIFI_CLUSTER_FLOW_ELECTION_MAX_TIME+x} ]]; then
+        echo "nifi flow election max wait time is not specified, using default value (5 minutes)."
+    else
+        echo "nifi flow election max wait time is set to ${NIFI_CLUSTER_FLOW_ELECTION_MAX_TIME}"
+        sed -i "s|nifi.cluster.flow.election.max.wait.time=.*$|nifi.cluster.flow.election.max.wait.time=${NIFI_CLUSTER_FLOW_ELECTION_MAX_TIME}|" ${nifi_props_file}
+    fi
 
+    if [[ -z ${NIFI_REMOTE_INPUT_SOCKET_PORT+x} ]]; then
+        echo "nifi remote input socket port is not specified, using default value (empty) and S2S function is disabled."
+    else
+        echo "nifi remote input port is set to ${NIFI_REMOTE_INPUT_SOCKET_PORT}"
+        sed -i "s|nifi.remote.input.socket.port=.*$|nifi.remote.input.socket.port=${NIFI_REMOTE_INPUT_SOCKET_PORT}|" ${nifi_props_file}
+    fi
 }
 
 update_jvm_size
