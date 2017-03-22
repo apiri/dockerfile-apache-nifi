@@ -4,7 +4,7 @@
 nifi_props_file=${NIFI_HOME}/conf/nifi.properties
 bootstrap_file=${NIFI_HOME}/conf/bootstrap.conf
 logback_file=${NIFI_HOME}/conf/logback.xml
-
+state_management_file=${NIFI_HOME}/conf/state-management.xml
 hr() {
     width=20
     if [[ -s "$TERM" ]]
@@ -152,8 +152,11 @@ configure_cluster() {
         exit 1
     else
         echo "nifi cluster node address is set to ${NIFI_ZOOKEEPER_CONNECT_STRING}"
+        sed -i "s|<property name=\"Connect String\"></property>|<property name=\"Connect String\">${NIFI_ZOOKEEPER_CONNECT_STRING}</property>|" ${state_management_file}
         sed -i "s|nifi.zookeeper.connect.string=.*$|nifi.zookeeper.connect.string=${NIFI_ZOOKEEPER_CONNECT_STRING}|" ${nifi_props_file}
     fi
+
+
 }
 
 update_jvm_size
