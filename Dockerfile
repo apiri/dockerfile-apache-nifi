@@ -14,7 +14,7 @@ RUN             yum install -y java-1.8.0-openjdk tar && \
                 groupadd nifi && \
                 useradd -r -g nifi nifi && \
                 bash -c "mkdir -p ${NIFI_HOME}/{database_repository,flowfile_repository,content_repository,provenance_repository}" && \
-                chown nifi:nifi -R ${NIFI_HOME} \
+                chown nifi:nifi -R ${NIFI_HOME} &&\
                 timedatectl set-timezone America/Toronto
 
 # Expose web port
