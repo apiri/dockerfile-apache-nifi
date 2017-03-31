@@ -12,7 +12,7 @@ From your checkout directory:
 
 1. Build the image
 
-        docker build -t aldrin/apache-nifi .
+        docker build .
 
 2. Run the image
 
