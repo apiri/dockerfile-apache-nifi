@@ -5,6 +5,10 @@ nifi_props_file=${NIFI_HOME}/conf/nifi.properties
 bootstrap_file=${NIFI_HOME}/conf/bootstrap.conf
 logback_file=${NIFI_HOME}/conf/logback.xml
 state_management_file=${NIFI_HOME}/conf/state-management.xml
+jaas_config_file=${NIFI_HOME}/conf/zookeeper-jaas.conf
+krb_config_file=${NIFI_HOME}/conf/krb.conf
+authorizers_config_file=${NIFI_HOME}/conf/authorizers.xml
+login_identity_providers_config_file=${NIFI_HOME}/conf/login-identity-providers.xml
 hr() {
     width=20
     if [[ -s "$TERM" ]]
@@ -69,16 +73,39 @@ enable_ssl() {
     : ${TRUSTSTORE_TYPE:?"Need to set DEST non-empty"}
     : ${TRUSTSTORE_PASSWORD:?"Need to set DEST non-empty"}
 
-    sed -i '\|^nifi.security.keystore=| s|$|'${KEYSTORE_PATH}'|g' ${nifi_props_file}
-    sed -i '\|^nifi.security.keystoreType=| s|$|'${KEYSTORE_TYPE}'|g' ${nifi_props_file}
-    sed -i '\|^nifi.security.keystorePasswd=| s|$|'${KEYSTORE_PASSWORD}'|g' ${nifi_props_file}
-    sed -i '\|^nifi.security.truststore=| s|$|'${TRUSTSTORE_PATH}'|g' ${nifi_props_file}
-    sed -i '\|^nifi.security.truststoreType=| s|$|'${TRUSTSTORE_TYPE}'|g' ${nifi_props_file}
-    sed -i '\|^nifi.security.truststorePasswd=| s|$|'${TRUSTSTORE_PASSWORD}'|g' ${nifi_props_file}
+    sed -i "s|^nifi.security.keystore=.*$|nifi.security.keystore=${KEYSTORE_PATH}|" ${nifi_props_file}
+    sed -i "s|^nifi.security.keystoreType=.*$|nifi.security.keystoreType=${KEYSTORE_TYPE}|" ${nifi_props_file}
+    sed -i "s|^nifi.security.keystorePasswd=.*$|nifi.security.keystorePasswd=${KEYSTORE_PASSWORD}|" ${nifi_props_file}
+    sed -i "s|^nifi.security.truststore=.*$|nifi.security.truststore=${TRUSTSTORE_PATH}|" ${nifi_props_file}
+    sed -i "s|^nifi.security.truststoreType=.*$|nifi.security.truststoreType=${TRUSTSTORE_TYPE}|" ${nifi_props_file}
+    sed -i "s|^nifi.security.truststorePasswd=.*$|nifi.security.truststorePasswd=${TRUSTSTORE_PASSWORD}|" ${nifi_props_file}
 
     # Disable HTTP and enable HTTPS
     sed -i -e 's|nifi.web.http.port=.*$|nifi.web.http.port=|' ${nifi_props_file}
     sed -i -e 's|nifi.web.https.port=.*$|nifi.web.https.port=8443|' ${nifi_props_file}
+
+    # Enable secure remote input
+    sed -i 's|nifi.remote.input.secure=.*$|nifi.remote.input.secure=true|' ${nifi_props_file}
+
+    # TODO: Bind to all interface
+    echo "" >>  ${nifi_props_file}
+    echo "nifi.web.https.network.interface.eth0=eth0" >> ${nifi_props_file}
+    echo "nifi.web.https.network.interface.eth1=eth1" >> ${nifi_props_file}
+
+    # Enable ssl for cluster
+    sed -i 's|nifi.cluster.protocol.is.secure=.*$|nifi.cluster.protocol.is.secure=true|' ${nifi_props_file}
+
+    # Add node identity to the authorizers file
+    if [[ -z ${NIFI_NODE_IDENTITY_LIST+x} ]]; then
+        echo "nifi node identity list not specified"
+    else
+        echo "nifi node identity list is set to ${NIFI_NODE_IDENTITY_LIST}"
+        IFS=';' read -ra nodes <<< "${NIFI_NODE_IDENTITY_LIST}"
+        for i in "${!nodes[@]}"
+        do
+            sed -i "/<property name=\"Legacy Authorized Users File\"><\/property>/a \ \ \ \ \ \ \ \ <property name=\"Node Identity $((i+1))\">${nodes[$i]}<\/property>" ${authorizers_config_file}
+        done
+    fi
 }
 
 disable_ssl() {
@@ -92,8 +119,19 @@ disable_ssl() {
     sed -i -e 's|^nifi.security.truststorePasswd=.*$|nifi.security.truststorePasswd=|' ${nifi_props_file}
 
     # Disable HTTPS and enable HTTP
-    sed -i -e 's|nifi.web.http.port=.*$|nifi.web.http.port=8080|' ${nifi_props_file}
-    sed -i -e 's|nifi.web.https.port=.*$|nifi.web.https.port=|' ${nifi_props_file}
+    sed -i -e 's|^nifi.web.http.port=.*$|nifi.web.http.port=8080|' ${nifi_props_file}
+    sed -i -e 's|^nifi.web.https.port=.*$|nifi.web.https.port=|' ${nifi_props_file}
+
+    # Disable secure remote input
+    sed -i 's|nifi.remote.input.secure=.*$|nifi.remote.input.secure=|' ${nifi_props_file}
+
+    # TODO Bind to all interface
+    echo "" >>  ${nifi_props_file}
+    echo "nifi.web.http.network.interface.eth0=eth0" >> ${nifi_props_file}
+    echo "nifi.web.http.network.interface.eth1=eth1" >> ${nifi_props_file}
+
+    # Disable ssl for cluster
+    sed -i 's|nifi.cluster.protocol.is.secure=.*$|nifi.cluster.protocol.is.secure=false|' ${nifi_props_file}
 }
 
 update_logging_level() {
@@ -108,7 +146,7 @@ update_logging_level() {
 }
 
 update_host() {
-    echo Configuring cluster
+    echo Configuring host
     if [[ -z ${NIFI_HOST+x} ]]; then
         echo "nifi host is not specified, Using default value (localhost)"
     else
@@ -169,6 +207,171 @@ configure_cluster() {
         echo "nifi remote input port is set to ${NIFI_REMOTE_INPUT_SOCKET_PORT}"
         sed -i "s|nifi.remote.input.socket.port=.*$|nifi.remote.input.socket.port=${NIFI_REMOTE_INPUT_SOCKET_PORT}|" ${nifi_props_file}
     fi
+
+}
+
+configure_kerberos(){
+    echo "configure kerberos setting for Kafka"
+
+cat << EOT > ${jaas_config_file}
+Client {
+  com.sun.security.auth.module.Krb5LoginModule required
+  useKeyTab=true
+  keyTab=""
+  useTicketCache=false
+  principal="";
+};
+KafkaClient {
+   com.sun.security.auth.module.Krb5LoginModule required
+   useTicketCache=false
+   renewTicket=true
+   serviceName="kafka"
+   useKeyTab=true
+   keyTab=""
+   principal="";
+};
+EOT
+
+cat << EOT > ${krb_config_file}
+[logging]
+ default = FILE:/var/log/kerberos/krb5libs.log
+ kdc = FILE:/var/log/kerberos/krb5kdc.log
+ admin_server = FILE:/var/log/kerberos/kadmind.log
+
+[libdefaults]
+ default_realm = DEFAULT_REALM
+ dns_lookup_realm = false
+ dns_lookup_kdc = false
+ ticket_lifetime = 24h
+ renew_lifetime = 7d
+ forwardable = true
+
+[realms]
+ DEFAULT_REALM = {
+  kdc = KDC_SERVER
+  admin_server = KDC_SERVER
+ }
+
+[domain_realm]
+ .DEFAULT_REALM = DEFAULT_REALM
+ DEFAULT_REALM = DEFAULT_REALM
+EOT
+
+    if [[ -z ${NIFI_KEYTAB_PATH+x} ]]; then
+        echo "nifi keytab file path is not specified but required when kerberos is enabled."
+        exit 1
+    else
+        echo "nifi keytab file path is set to ${NIFI_KEYTAB_PATH}"
+        sed -i "s|keyTab=.*$|keyTab=\"${NIFI_KEYTAB_PATH}\"|g" ${jaas_config_file}
+    fi
+
+    if [[ -z ${NIFI_KEYTAB_PRINCIPAL+x} ]]; then
+        echo "nifi keytab principal is not specified but required when kerberos is enabled."
+        exit 1
+    else
+        echo "nifi keytab principal is  set to ${NIFI_KEYTAB_PRINCIPAL}"
+        sed -i "s|principal=.*$|principal=\"${NIFI_KEYTAB_PRINCIPAL}\";|g" ${jaas_config_file}
+    fi
+
+    if [[ -z ${NIFI_KERBEROS_DEFAULT_REALM+x} ]]; then
+        echo "nifi kerberos realm is not specified but required when kerberos is enabled."
+        exit 1
+    else
+        echo "nifi kerberos realm is set to ${NIFI_KERBEROS_DEFAULT_REALM}"
+        sed -i "s|DEFAULT_REALM|${NIFI_KERBEROS_DEFAULT_REALM}|g" ${krb_config_file}
+    fi
+
+    if [[ -z ${NIFI_KERBEROS_KDC_SERVER+x} ]]; then
+        echo "nifi kerberos kdc server is not specified but required when kerberos is enabled."
+        exit 1
+    else
+        echo "nifi kerberos kdc server is set to ${NIFI_KERBEROS_KDC_SERVER}"
+        sed -i "s|KDC_SERVER|${NIFI_KERBEROS_KDC_SERVER}|g" ${krb_config_file}
+    fi
+
+    # set JAAS configuration for kerberos
+    cat << EOT >> ${bootstrap_file}
+#set JAAS configuration for kerberos
+java.arg.15=-Djava.security.auth.login.config=${jaas_config_file}
+java.arg.16=-Djava.security.krb5.conf=${krb_config_file}
+EOT
+
+}
+
+configure_LDAP() {
+    sed -i "s|nifi.security.user.login.identity.provider=.*$|nifi.security.user.login.identity.provider=ldap-provider|g" ${nifi_props_file}
+    sed -i "s|<property name=\"Initial Admin Identity\"></property>|<property name=\"Initial Admin Identity\">${NIFI_LDAP_INIT_ADMIN}</property>|" ${authorizers_config_file}
+
+cat << EOT > ${login_identity_providers_config_file}
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<loginIdentityProviders>
+<provider>
+    <identifier>ldap-provider</identifier>
+    <class>org.apache.nifi.ldap.LdapProvider</class>
+    <property name="Authentication Strategy">SIMPLE</property>
+
+    <property name="Manager DN"></property>
+    <property name="Manager Password"></property>
+    <property name="TLS - Keystore"></property>
+    <property name="TLS - Keystore Password"></property>
+    <property name="TLS - Keystore Type"></property>
+    <property name="TLS - Truststore"></property>
+    <property name="TLS - Truststore Password"></property>
+    <property name="TLS - Truststore Type"></property>
+    <property name="TLS - Client Auth"></property>
+    <property name="TLS - Protocol"></property>
+    <property name="TLS - Shutdown Gracefully"></property>
+    <property name="Referral Strategy">FOLLOW</property>
+    <property name="Connect Timeout">10 secs</property>
+    <property name="Read Timeout">10 secs</property>
+
+    <property name="Url"></property>
+    <property name="User Search Base"></property>
+    <property name="User Search Filter"></property>
+    <property name="Authentication Expiration">12 hours</property>
+</provider>
+</loginIdentityProviders>
+EOT
+
+    if [[ -z ${NIFI_LDAP_MANAGER_DN+x} ]]; then
+        echo "nifi ldap manager dn is not specified but required when ldap is enabled."
+        exit 1
+    else
+        echo "nifi ldap manager dn is set to ${NIFI_LDAP_MANAGER_DN}"
+        sed -i "s|<property name=\"Manager DN\"></property>|<property name=\"Manager DN\">${NIFI_LDAP_MANAGER_DN}</property>|g" ${login_identity_providers_config_file}
+    fi
+
+    if [[ -z ${NIFI_LDAP_MANAGER_PASSWORD+x} ]]; then
+        echo "nifi ldap manager password not specified but required when ldap is enabled."
+        exit 1
+    else
+        echo "nifi ldap manager password is set to ************"
+        sed -i "s|<property name=\"Manager Password\"></property>|<property name=\"Manager Password\">${NIFI_LDAP_MANAGER_PASSWORD}</property>|g" ${login_identity_providers_config_file}
+    fi
+
+    if [[ -z ${NIFI_LDAP_URL+x} ]]; then
+        echo "nifi ldap url not specified but required when ldap is enabled."
+        exit 1
+    else
+        echo "nifi ldap url password is set to ${NIFI_LDAP_URL}"
+        sed -i "s|<property name=\"Url\"></property>|<property name=\"Url\">${NIFI_LDAP_URL}</property>|g" ${login_identity_providers_config_file}
+    fi
+
+    if [[ -z ${NIFI_LDAP_USER_SEARCH_BASE+x} ]]; then
+        echo "nifi ldap user search base not specified but required when ldap is enabled."
+        exit 1
+    else
+        echo "nifi ldap user search base is set to ${NIFI_LDAP_USER_SEARCH_BASE}"
+        sed -i "s|<property name=\"User Search Base\"></property>|<property name=\"User Search Base\">${NIFI_LDAP_USER_SEARCH_BASE}</property>|g" ${login_identity_providers_config_file}
+    fi
+
+    if [[ -z ${NIFI_LDAP_USER_SEARCH_FILTER+x} ]]; then
+        echo "nifi ldap user search filter not specified but required when ldap is enabled."
+        exit 1
+    else
+        echo "nifi ldap user search filter is set to ${NIFI_LDAP_USER_SEARCH_FILTER}"
+        sed -i "s|<property name=\"User Search Filter\"></property>|<property name=\"User Search Filter\">${NIFI_LDAP_USER_SEARCH_FILTER}</property>|g" ${login_identity_providers_config_file}
+    fi
 }
 
 update_jvm_size
@@ -190,6 +393,21 @@ else
     disable_ssl
 fi
 
+if [[ "$DISABLE_KERBEROS" != "true" ]]; then
+    configure_kerberos
+else
+    hr
+    echo 'NOTE: Apache NiFi has not been configured to run with kerberos.'
+    hr
+fi
+
+if [[ "$DISABLE_LDAP" != "true" ]]; then
+    configure_LDAP
+else
+    hr
+    echo 'NOTE: Apache NiFi has not been configured to run with LDAP.'
+    hr
+fi
 
 # Continuously provide logs so that 'docker logs' can produce them
 tail -F ${NIFI_HOME}/logs/nifi-app.log &
